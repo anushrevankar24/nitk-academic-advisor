@@ -1,0 +1,92 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment variables
+.env
+
+# Generated data
+data/chunks_*.ndjson
+data/bm25_index.pkl
+data/faiss_storage/
+data/embeddings_cache.pkl
+data/pdfs/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Test coverage
+.coverage
+htmlcov/
+
+# Temporary files
+*.tmp
+*.bak
+
+# Test response files
+test_cs200_chunk.json
+
+# AI assistant files - local only
+.github/copilot-instructions.md
+*_SUMMARY.md
+*_ANALYSIS.md
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PROJECT_REPORT.md
+data.zip

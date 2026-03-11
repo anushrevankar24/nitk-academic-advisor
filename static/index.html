@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NITK Academic Advisor</title>
+    <meta name="description"
+        content="AI-powered academic advisor for NITK Surathkal — ask questions about academic policies, regulations, curriculum, and more.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <!-- Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-content">
+            <div class="header-left">
+                <div class="logo">
+                    <img src="/static/iris.svg" alt="NITK Logo" class="logo-img">
+                    <div>
+                        <h1>NITK Academic Advisor</h1>
+                        <p class="subtitle">AI-powered answers from official NITK handbooks</p>
+                    </div>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="status-badge" id="statusBadge" title="System status">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span class="status-text" id="statusText">Connecting...</span>
+                </div>
+                <button class="new-chat-btn" onclick="newChat()" title="New conversation">
+                    ✨ New Chat
+                </button>
+                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode"
+                    title="Toggle dark mode">
+                    <span class="theme-icon" id="themeIcon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Chat Area -->
+    <main class="chat-container">
+        <!-- Chat History -->
+        <div class="chat-history" id="chatHistory">
+            <!-- Welcome message -->
+            <div class="welcome-message" id="welcomeMessage">
+                <h2>Welcome to NITK Academic Advisor</h2>
+                <p>Ask me anything about NITK academic policies, regulations, curriculum, grading, attendance, and more.
+                </p>
+                <div class="example-queries">
+                    <p class="example-label">Try asking:</p>
+                    <button class="example-chip"
+                        onclick="fillQuestion('What is the minimum attendance required to appear for exams?')">📋
+                        Minimum attendance for exams?</button>
+                    <button class="example-chip"
+                        onclick="fillQuestion('How can I complete my liberal arts credits?')">🎨 Liberal arts credit
+                        requirements?</button>
+                    <button class="example-chip" onclick="fillQuestion('What is the grading system for B.Tech?')">📊
+                        B.Tech grading system?</button>
+                    <button class="example-chip" onclick="fillQuestion('How do I apply for a course drop?')">📝 Course
+                        drop procedure?</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Bar -->
+        <div class="input-bar">
+            <div class="input-bar-inner">
+                <!-- Scope Toggle -->
+                <div class="scope-toggle" role="radiogroup" aria-label="Search scope">
+                    <button class="scope-pill" data-value="both" onclick="setScope(this)" role="radio"
+                        aria-checked="false">All</button>
+                    <button class="scope-pill active" data-value="ug" onclick="setScope(this)" role="radio"
+                        aria-checked="true">UG</button>
+                    <button class="scope-pill" data-value="pg" onclick="setScope(this)" role="radio"
+                        aria-checked="false">PG</button>
+                </div>
+
+                <!-- Input Row -->
+                <div class="input-row">
+                    <textarea id="questionInput" placeholder="Ask about academic policies, regulations, grading..."
+                        rows="1" aria-label="Your question"></textarea>
+                    <button class="send-btn" id="askButton" onclick="askQuestion()" aria-label="Send question"
+                        title="Send (Ctrl+Enter)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+                <span class="input-hint">Press <kbd>Ctrl</kbd>+<kbd>Enter</kbd> to send</span>
+            </div>
+        </div>
+    </main>
+
+    <script src="/static/app.js"></script>
+</body>
+
+</html>

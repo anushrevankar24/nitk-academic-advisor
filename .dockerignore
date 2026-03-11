@@ -1,0 +1,67 @@
+# Git
+.git
+.gitignore
+.github
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment files (will be provided at runtime)
+.env
+.env.*
+
+# Generated data (will be mounted as volumes)
+data/chunks_*.ndjson
+data/bm25_index.pkl
+data/faiss_storage/
+data/embeddings_cache.pkl
+data/pdfs/*.pdf
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Documentation
+README.md
+CHANGELOG.md
+*.md
+
+# Tests
+tests/
+test_*.py
+*.ipynb
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+build/
+*.tar.gz
+
+# Temporary files
+*.tmp
+*.bak

@@ -1,126 +1,173 @@
-## NITK Academic Advisor — Retrieval-Augmented QA Chatbot
+# NITK Academic Advisor
 
-An intelligent RAG system that answers questions about NITK academic policies and regulations using local handbooks. It combines BM25 keyword search, FAISS vector search, reranking, and Gemini-based answer generation with citations.
+An intelligent **Retrieval-Augmented Generation (RAG)** chatbot that answers questions about NITK Surathkal's academic regulations, curriculum, grading, attendance, and policies — grounded entirely in the official handbook PDFs.
 
-### Key Features
-- **Hybrid Retrieval**: BM25 lexical + FAISS semantic search
-- **Reranking**: Cross-encoder reranker for better relevance
-- **Citations**: Each answer returns source PDF and page(s)
-- **Modern API + UI**: FastAPI backend with a simple web UI
-- **Local artifacts**: Stores indices locally in `data/`
+---
 
-## Architecture Overview
+## Features
+
+- **Hybrid Retrieval** — BM25 keyword search + FAISS semantic search, fused with Reciprocal Rank Fusion (RRF)
+- **Cross-Encoder Reranking** — `BAAI/bge-reranker-large` reranks candidates for precision
+- **MMR Diversity** — Maximal Marginal Relevance selects a diverse final context set for the LLM
+- **UG / PG Scope Filtering** — Filter answers strictly to B.Tech or M.Tech/Ph.D curriculum
+- **Source Citations** — Every answer links to the exact PDF, page range, and relevance score
+- **In-Browser PDF Viewer** — Click any source to open the original PDF at the exact page, with the retrieved text highlighted in yellow
+- **React Frontend** — Modern SPA built with React 18 + Vite; markdown rendering, confidence badge, collapsible sources
+- **OpenRouter LLM** — Uses Gemini 2.0 Flash (free tier) via OpenRouter; swap models with one env variable
+
+---
+
+## Architecture
+
 ```
-User Query
-   ↓
-Embedding → Vector Search (FAISS)
-           + BM25 Keyword Search
-   ↓
-Score Fusion → Cross-Encoder Rerank
-   ↓
-Select Top Chunks
-   ↓
-Gemini (Direct generation using only retrieved chunks)
-   ↓
-Markdown Answer + Source Citations
+User Question (React UI)
+        │
+        ▼
+  FastAPI  POST /chat
+        │
+        ├──► embed_query (E5-base-v2 — query prefix)
+        │
+        ├──► HybridRetriever
+        │       ├── VectorStore.search   (FAISS cosine sim, w/ UG/PG filter)
+        │       ├── BM25Index.search     (Okapi BM25, w/ UG/PG filter)
+        │       └── RRF Fusion           (alpha=0.3 → top-100)
+        │
+        ├──► Reranker.rerank             (bge-reranker-large → top-20)
+        │
+        ├──► MMRSelector.select          (lambda=0.7 → final 10 chunks)
+        │
+        └──► DirectGenerator
+                └── OpenRouter → Gemini 2.0 Flash
+                        └── answer_markdown + sources + confidence
 ```
+
+---
 
 ## Prerequisites
+
 - Python 3.10+
-- A Gemini API key
-- Optional GPU acceleration (PyTorch + CUDA) for faster embeddings
+- Node.js 18+ (for building the React frontend)
+- An **OpenRouter API key** (free at [openrouter.ai](https://openrouter.ai))
+- Optional: GPU + CUDA for faster embedding during ingestion
+
+---
 
 ## Quickstart
-1) Clone and enter the project
+
+### 1. Clone the repository
+
 ```bash
 git clone https://github.com/anushrevankar24/nitk-academic-advisor.git
 cd nitk-academic-advisor
 ```
 
-2) Create and activate a virtual environment
+### 2. Create a Python virtual environment
+
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-3) Install dependencies
+### 3. Install Python dependencies
+
 ```bash
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-GPU optional (recommended if you have CUDA):
-```bash
-# Choose the correct CUDA version for your system
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
-```
+> **GPU (optional):** Install PyTorch with CUDA for faster embedding during ingestion:
+> ```bash
+> pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+> ```
 
-4) Configure environment variables
+### 4. Configure environment variables
+
 ```bash
 cp example.env .env
-# Edit .env and set: GEMINI_API_KEY, optional tuning values
+# Open .env and set your OPENROUTER_API_KEY
 ```
 
-Minimum required in `.env`:
+The only required value:
 ```
-GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
-```
-
-Other useful variables are already documented in `example.env` (ports, models, chunking, thresholds, paths).
-
-5) Add your PDFs
-```
-data/pdfs/
-  ├─ Btech_Curriculum_2023.pdf
-  └─ PG_Curriculum_2023.pdf
+OPENROUTER_API_KEY="sk-or-..."
 ```
 
-6) Ingest documents (build vector index + BM25)
+All other settings have sensible defaults (see `example.env` for the full list with comments).
+
+### 5. Add your PDFs
+
+Place the NITK handbook PDFs in `backend/data/pdfs/`:
+```
+backend/data/pdfs/
+  ├── Btech_Curriculum_2023.pdf
+  └── PG_Curriculum_2023.pdf
+```
+
+> If you set `BTECH_PDF_URL` and `PG_PDF_URL` in `.env`, the ingestion script will download them automatically.
+
+### 6. Ingest documents
+
 ```bash
-python scripts/ingest_documents.py
+python backend/scripts/ingest_documents.py
 ```
 
-Expected outputs (under `data/`):
-- `bm25_index.pkl` — BM25 index
-- `faiss_storage/` — FAISS index + metadata
-- `chunks_documents_v2.ndjson` — Chunk dump
+This builds:
+- `backend/data/faiss_storage/` — FAISS vector index + metadata
+- `backend/data/bm25_index.pkl` — BM25 lexical index
+- `backend/data/chunks_documents_v2.ndjson` — chunk dump (for inspection)
 
-7) Run the API server
+> **Run once**, or re-run whenever PDFs are updated.
+
+### 7. Build the React frontend
+
 ```bash
-# Option A: directly with uvicorn
-uvicorn src.api.main:app --host 127.0.0.1 --port 8000 --log-level info
+cd frontend
+npm install
+npm run build
+cd ..
+```
 
-# Option B: via helper script (loads .env, creates venv if needed)
+The built assets land in `frontend/dist/` and are automatically served by FastAPI.
+
+### 8. Start the server
+
+```bash
 bash start_server.sh
 ```
 
-Open the UI at:
+Or manually:
+```bash
+export PYTHONPATH="$PWD/backend:$PYTHONPATH"
+uvicorn src.api.main:app --app-dir backend --host 127.0.0.1 --port 8000
 ```
-http://localhost:8000
+
+Open the UI at **http://localhost:8000**
+
+---
+
+## Development Workflow
+
+For active frontend development, use Vite's dev server (with hot-module replacement):
+
+```bash
+# Terminal 1 — backend
+bash start_server.sh
+
+# Terminal 2 — frontend dev server (proxies /chat /status /pdf to backend)
+cd frontend
+npm run dev
 ```
 
-## Environment Variables
-The project reads configuration via `src/utils/config.py`. Common settings (see `example.env` for defaults):
+Frontend is available at **http://localhost:5173** during development.
 
-- API: `API_HOST`, `API_PORT`, `API_RELOAD`
-- Gemini: `GEMINI_API_KEY`, `GEMINI_MODEL`
-- Chunking: `CHUNK_SIZE`, `CHUNK_OVERLAP`, `INGEST_VERSION`
-- Models: `EMBEDDING_MODEL`, `EMBEDDING_DIM`, `CROSS_ENCODER_MODEL`
-- Retrieval: `TOP_K_VECTOR`, `TOP_K_BM25`, `TOP_K_HYBRID`, `TOP_K_RERANK`, `FINAL_TOP_K`, `HYBRID_ALPHA`
-- MMR (if used elsewhere): `MMR_LAMBDA`
-- Paths: `DATA_DIR`, `PDF_DIR`, `CHUNKS_FILE`, `BM25_INDEX_FILE` (FAISS paths are derived)
-  - Note: `FINAL_TOP_K` determines how many sources are returned in answers.
-- Logging/Timeouts: `LOG_LEVEL`, `REQUEST_TIMEOUT`, `RESPONSE_TIMEOUT`
+---
 
-Copy `example.env` to `.env` and update values as needed.
+## API Reference
 
-## API Usage
-
-### Health Check
+### `GET /status` — Health check
 ```bash
 curl http://localhost:8000/status
 ```
-Example response:
 ```json
 {
   "status": "ready",
@@ -128,116 +175,90 @@ Example response:
   "vector_store_ready": true,
   "bm25_index_ready": true,
   "cross_encoder_loaded": true,
-  "total_chunks": 1234
+  "total_chunks": 2847
 }
 ```
 
-### Ask a Question
-Endpoint: `POST /chat`
+### `POST /chat` — Ask a question
 ```bash
 curl -s -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
-  -d '{"question": "What is the minimum attendance required?"}'
+  -d '{"question": "What is the minimum attendance required?", "level": "ug"}'
 ```
-Example response:
 ```json
 {
-  "answer_markdown": "...",
+  "answer_markdown": "Students must maintain a minimum attendance of **75%** ...",
   "sources": [
     {
-      "chunk_id": "chunk_123",
-      "text": "...",
+      "chunk_id": "a1b2c3d4...",
+      "text": "...raw chunk text...",
       "pdf_name": "Btech_Curriculum_2023.pdf",
       "page_start": 34,
       "page_end": 34,
-      "score": 0.92
+      "score": 0.91
     }
   ],
-  "confidence": 0.87,
-  "time_ms": 1234.56
+  "confidence": 0.88,
+  "time_ms": 1432.5
 }
 ```
 
-### Debug Retrieval Scores
-Endpoint: `GET /debug/topk?question=...`
+`level` can be `"ug"`, `"pg"`, or `"both"` (default).
+
+### `GET /debug/topk?question=...` — Inspect retrieval scores
 ```bash
-curl "http://localhost:8000/debug/topk?question=attendance%20policy"
+curl "http://localhost:8000/debug/topk?question=attendance+policy"
 ```
+Returns per-chunk scores: vector, BM25, hybrid (RRF), cross-encoder, MMR selected flag.
 
-### Reindex (placeholder)
-Endpoint: `POST /admin/reindex`
-```bash
-curl -X POST http://localhost:8000/admin/reindex
-```
-Response points you to run the ingestion script instead.
+### `GET /pdf/{filename}` — Serve a source PDF
+Used internally by the in-browser PDF viewer. Secured against path traversal.
 
-## Frontend UI
-Static files live in `static/`. The API serves `static/index.html` at the root path `/`. After starting the server, open:
-```
-http://localhost:8000
-```
-and ask a question in the UI. Answers are rendered as markdown with a Sources panel.
+### `POST /admin/reindex` — Trigger re-ingestion
+Returns a reminder to run `python backend/scripts/ingest_documents.py`.
 
-## Project Structure
-```
-nitk-academic-advisor/
-├── data/
-│   ├── pdfs/                       # Input PDFs (not committed)
-│   ├── bm25_index.pkl              # Generated BM25 index
-│   ├── chunks_documents_v2.ndjson  # Generated chunks
-│   └── faiss_storage/              # FAISS index + metadata
-├── scripts/
-│   └── ingest_documents.py         # Ingestion pipeline entrypoint
-├── src/
-│   ├── api/                        # FastAPI app and models
-│   ├── generation/                 # Gemini generator
-│   ├── ingestion/                  # PDF processing, embeddings
-│   ├── retrieval/                  # FAISS, BM25, hybrid, reranker
-│   └── utils/                      # Config and helpers
-├── static/                         # Frontend assets
-├── example.env                     # Env template (copy to .env)
-├── requirements.txt
-├── start_server.sh                 # Helper to start API
-└── README.md
-```
+---
+
+## Environment Variables
+
+All variables are documented in `example.env`. The most important ones:
+
+| Variable | Default | Description |
+|---|---|---|
+| `OPENROUTER_API_KEY` | *(required)* | Your OpenRouter API key |
+| `OPENROUTER_MODEL` | `google/gemini-2.0-flash-exp:free` | LLM model via OpenRouter |
+| `EMBEDDING_MODEL` | `intfloat/e5-base-v2` | Sentence embedding model |
+| `CROSS_ENCODER_MODEL` | `BAAI/bge-reranker-large` | Reranker model |
+| `HYBRID_ALPHA` | `0.3` | BM25 weight (1-alpha = vector weight) |
+| `FINAL_TOP_K` | `10` | Final chunks sent to LLM / sources returned |
+| `API_PORT` | `8000` | Server port |
+| `BTECH_PDF_URL` | *(empty)* | Auto-download URL for B.Tech PDF |
+| `PG_PDF_URL` | *(empty)* | Auto-download URL for PG PDF |
+
+---
 
 ## Troubleshooting
-- **503 System not ready**: Run `python scripts/ingest_documents.py` to build indices; ensure PDFs exist in `data/pdfs/`.
-- **Slow first run**: Model downloads can be ~1GB; subsequent runs are faster.
-- **Gemini errors**: Ensure `GEMINI_API_KEY` is set and has quota.
-- **Port in use**: Change `API_PORT` in `.env` or kill existing process; `start_server.sh` attempts to free the port.
-- **CUDA not used**: Verify your PyTorch install matches your CUDA version.
 
-## Performance Notes
-- Embedding step is the heaviest. Use GPU if available for 5-10x speedup.
-- Retrieval and generation latency depends on chunk sizes and `TOP_K_*` parameters.
+| Symptom | Fix |
+|---|---|
+| **503 System not ready** | Run the ingestion script; ensure PDFs exist in `backend/data/pdfs/`. |
+| **OpenRouter errors** | Verify `OPENROUTER_API_KEY` is set and valid. Check your OpenRouter dashboard for quota. |
+| **Slow first run** | Model downloads (~1–2 GB) happen once; subsequent starts are fast. |
+| **Port already in use** | `start_server.sh` kills stale processes automatically. Or change `API_PORT`. |
+| **Frontend not loading** | Run `cd frontend && npm run build` to (re)build the React app. |
+| **PDF viewer blank** | The PDF must exist in `backend/data/pdfs/` with the exact filename stored in metadata. |
 
-## Security and Data
-- Do not commit `.env`, PDFs, or generated indices. Use `example.env` as the template.
-- Review `.gitignore` to ensure local artifacts remain untracked.
+---
 
-## License
-Educational/Research use.
+## Acknowledgements
 
-## Acknowledgments
-- Embeddings by `intfloat/e5-base-v2`
-- FAISS for vector search
-- FastAPI for serving
-- Gemini for answer generation
+- Embeddings: [`intfloat/e5-base-v2`](https://huggingface.co/intfloat/e5-base-v2)
+- Reranker: [`BAAI/bge-reranker-large`](https://huggingface.co/BAAI/bge-reranker-large)
+- Vector search: [FAISS](https://github.com/facebookresearch/faiss)
+- LLM gateway: [OpenRouter](https://openrouter.ai)
+- PDF rendering: [PDF.js](https://mozilla.github.io/pdf.js/)
+- Framework: [FastAPI](https://fastapi.tiangolo.com/) + [React](https://react.dev/) + [Vite](https://vitejs.dev/)
 
+---
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+*For educational / research use at NITK Surathkal.*

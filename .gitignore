@@ -1,4 +1,12 @@
-# Python
+# ── Cache directories ────────────────────────────────────────────────────────
+.cache/
+
+# ── Node / Frontend ──────────────────────────────────────────────────────────
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# ── Python ───────────────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
 *$py.class
@@ -36,7 +44,13 @@ env/
 # Environment variables
 .env
 
-# Generated data
+# ── Generated data (backend) ─────────────────────────────────────────────────
+backend/data/chunks_*.ndjson
+backend/data/bm25_index.pkl
+backend/data/faiss_storage/
+backend/data/embeddings_cache.pkl
+backend/data/pdfs/
+# legacy flat paths (pre-refactor)
 data/chunks_*.ndjson
 data/bm25_index.pkl
 data/faiss_storage/
@@ -90,3 +104,10 @@ test_cs200_chunk.json
 
 PROJECT_REPORT.md
 data.zip
+
+# ── Large / generated artefacts ──────────────────────────────────────────────
+*.zip
+*.tar.gz
+*.pkl
+*.bin
+*.ndjson

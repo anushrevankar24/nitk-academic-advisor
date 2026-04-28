@@ -20,18 +20,18 @@ API_HOST = os.getenv("API_HOST", "127.0.0.1")
 API_PORT = int(os.getenv("API_PORT", "8000"))
 API_RELOAD = os.getenv("API_RELOAD", "true").lower() == "true"
 
-# Gemini API - with security validation
+# OpenRouter API - with security validation
 from .secrets import SecretsManager
 
-GEMINI_API_KEY = SecretsManager.get_secret(
-    "GEMINI_API_KEY",
-    secret_file=BASE_DIR / ".secrets" / "gemini_api_key" if (BASE_DIR / ".secrets" / "gemini_api_key").exists() else None
+OPENROUTER_API_KEY = SecretsManager.get_secret(
+    "OPENROUTER_API_KEY",
+    secret_file=BASE_DIR / ".secrets" / "openrouter_api_key" if (BASE_DIR / ".secrets" / "openrouter_api_key").exists() else None
 )
 
 # Validate API key on config load (fail fast)
-if not SecretsManager.validate_api_key(GEMINI_API_KEY, "GEMINI_API_KEY"):
-    print("ERROR: GEMINI_API_KEY is not set or invalid!", file=sys.stderr)
-    print("   Please set it in .env file or GEMINI_API_KEY environment variable", file=sys.stderr)
+if not SecretsManager.validate_api_key(OPENROUTER_API_KEY, "OPENROUTER_API_KEY"):
+    print("ERROR: OPENROUTER_API_KEY is not set or invalid!", file=sys.stderr)
+    print("   Please set it in .env file or OPENROUTER_API_KEY environment variable", file=sys.stderr)
     if os.getenv("ENV") == "production":
         sys.exit(1)  # Fail fast in production
 
@@ -44,7 +44,8 @@ INGEST_VERSION = os.getenv("INGEST_VERSION", "v2")
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "intfloat/e5-base-v2")
 EMBEDDING_DIM = int(os.getenv("EMBEDDING_DIM", "768"))
 CROSS_ENCODER_MODEL = os.getenv("CROSS_ENCODER_MODEL", "BAAI/bge-reranker-large")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash-exp")
+OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "google/gemini-2.0-flash-exp:free")
+OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
 
 # FAISS configuration
 FAISS_INDEX_FILE = BASE_DIR / os.getenv("FAISS_INDEX_FILE", "data/faiss_storage/documents_v2_index.bin")

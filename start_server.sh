@@ -1,127 +1,127 @@
 #!/bin/bash
 
-# NITK Academic Advisor Server Startup Script
-# This script starts the FastAPI application using Gunicorn
+# NITK Academic Advisor — Server Startup Script
 
-set -e  # Exit on any error
-
-# Colors for output
+# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+CYAN='\033[0;36m'
+NC='\033[0m'
 
-# Function to print colored output
-print_status() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-}
+print_status()  { echo -e "${BLUE}[INFO]${NC}    $1"; }
+print_success() { echo -e "${GREEN}[OK]${NC}      $1"; }
+print_warning() { echo -e "${YELLOW}[WARN]${NC}    $1"; }
+print_error()   { echo -e "${RED}[ERROR]${NC}   $1"; }
+print_step()    { echo -e "${CYAN}[STEP]${NC}    $1"; }
 
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
-print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
-# Get the directory where this script is located
+# ── Locate project ────────────────────────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$SCRIPT_DIR"
-
-print_status "Starting NITK Academic Advisor Server..."
-print_status "Project directory: $PROJECT_DIR"
-
-# Change to project directory
 cd "$PROJECT_DIR"
 
-# Check if virtual environment exists
-if [ ! -d ".venv" ]; then
-    print_error "Virtual environment not found. Please run setup first."
-    print_status "Creating virtual environment..."
-    python3 -m venv .venv
-fi
+echo ""
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${CYAN}   NITK Academic Advisor — Starting Up${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
 
-# Load environment variables from .env file
+# ── Load .env ─────────────────────────────────────────────────────────────────
 if [ -f ".env" ]; then
-    print_status "Loading environment variables from .env file..."
-    # Load only simple KEY=VALUE pairs, skip complex values
+    print_status "Loading .env..."
     while IFS= read -r line; do
-        # Skip comments and empty lines
-        if [[ "$line" =~ ^[[:space:]]*# ]] || [[ -z "${line// }" ]]; then
-            continue
-        fi
-        # Only export simple KEY=VALUE pairs (no special characters)
-        if [[ "$line" =~ ^[A-Z_][A-Z0-9_]*= ]]; then
-            export "$line"
-        fi
+        [[ "$line" =~ ^[[:space:]]*# ]] && continue
+        [[ -z "${line// }"           ]] && continue
+        [[ "$line" =~ ^[A-Z_][A-Z0-9_]*= ]] && export "$line"
     done < .env
 fi
 
-# Activate virtual environment
+# Resolve ports after .env is loaded
+export API_HOST=${API_HOST:-"127.0.0.1"}
+export API_PORT=${API_PORT:-8000}
+LOG_LEVEL_LOWER=$(echo "${LOG_LEVEL:-info}" | tr '[:upper:]' '[:lower:]')
+
+# ── Kill ALL old processes (by name AND by port) ──────────────────────────────
+print_step "Cleaning up old processes..."
+
+# Kill any process whose command line contains 'uvicorn src.api.main' or 'uvicorn backend.src.api.main'
+OLD_PIDS=$(pgrep -f "uvicorn.*src.api.main" 2>/dev/null || true)
+if [ -n "$OLD_PIDS" ]; then
+    print_warning "Killing stale uvicorn processes: ${OLD_PIDS//$'\n'/ }"
+    echo "$OLD_PIDS" | xargs kill -15 2>/dev/null || true
+    sleep 2
+    STILL_ALIVE=$(pgrep -f "uvicorn.*src.api.main" 2>/dev/null || true)
+    if [ -n "$STILL_ALIVE" ]; then
+        print_warning "Force-killing: ${STILL_ALIVE//$'\n'/ }"
+        echo "$STILL_ALIVE" | xargs kill -9 2>/dev/null || true
+        sleep 1
+    fi
+fi
+
+# Kill anything still holding the target port (belt-and-suspenders)
+PORT_PIDS=$(lsof -ti:"$API_PORT" 2>/dev/null || true)
+if [ -n "$PORT_PIDS" ]; then
+    print_warning "Port $API_PORT still in use by PID(s): ${PORT_PIDS//$'\n'/ } — killing..."
+    echo "$PORT_PIDS" | xargs kill -9 2>/dev/null || true
+    sleep 1
+fi
+
+WAIT=0
+while lsof -ti:"$API_PORT" &>/dev/null; do
+    if [ "$WAIT" -ge 10 ]; then
+        print_error "Port $API_PORT is still busy after 10 s. Aborting."
+        exit 1
+    fi
+    print_status "Waiting for port $API_PORT to free… (${WAIT}s)"
+    sleep 1
+    WAIT=$((WAIT + 1))
+done
+print_success "Port $API_PORT is free."
+
+# ── Virtual environment ───────────────────────────────────────────────────────
+print_step "Checking Python Environment..."
+if [ ! -d ".venv" ]; then
+    print_error "Virtual environment not found."
+    print_status "Creating one now..."
+    python3 -m venv .venv
+fi
 print_status "Activating virtual environment..."
 source .venv/bin/activate
 
-# Skip dependency check - assume they are installed
-print_status "Skipping dependency check - assuming requirements are installed"
+# ── Pre-flight checks ─────────────────────────────────────────────────────────
+MISSING=0
+[ ! -f "backend/data/bm25_index.pkl"  ] && print_error "BM25 index missing — run ingestion script." && MISSING=1
+[ ! -d "backend/data/faiss_storage"   ] && print_error "FAISS index missing — run ingestion script." && MISSING=1
+[ "$MISSING" -eq 1 ] && exit 1
 
-# Check for environment variables
-if [ -z "$GEMINI_API_KEY" ]; then
-    print_warning "GEMINI_API_KEY not set. Please check your .env file"
+# ── Frontend Build ────────────────────────────────────────────────────────────
+print_step "Checking React Frontend..."
+cd frontend
+if [ ! -d "node_modules" ]; then
+    print_status "Installing frontend dependencies..."
+    npm install
 fi
 
-# Check if data files exist
-MISSING_ARTIFACTS=0
-if [ ! -f "data/bm25_index.pkl" ]; then
-    print_error "BM25 index not found. Please run ingestion script first:"
-    print_status "python scripts/ingest_documents.py"
-    MISSING_ARTIFACTS=1
+if [ ! -d "dist" ]; then
+    print_status "Building React frontend for production..."
+    npm run build
+else
+    print_status "Frontend build found. (If you made changes, run 'npm run build' inside frontend/)"
 fi
+cd ..
 
-if [ ! -d "data/faiss_storage" ]; then
-    print_error "FAISS storage not found. Please run ingestion script first:"
-    print_status "python scripts/ingest_documents.py"
-    MISSING_ARTIFACTS=1
-fi
+# ── Launch ────────────────────────────────────────────────────────────────────
+echo ""
+print_success "All checks passed. Launching server..."
+print_status  "URL: http://$API_HOST:$API_PORT"
+echo ""
 
-if [ "$MISSING_ARTIFACTS" -eq 1 ]; then
-    print_error "Required indices missing. Aborting server start."
-    exit 1
-fi
+# Note: The api is now located at backend.src.api.main due to the folder restructuring
+export PYTHONPATH="$PROJECT_DIR/backend:$PYTHONPATH"
 
-# Kill any existing processes on the same port
-API_PORT=${API_PORT:-8000}
-print_status "Checking for existing processes on port $API_PORT..."
-
-# Find and kill existing processes
-EXISTING_PID=$(lsof -ti:$API_PORT 2>/dev/null || true)
-if [ ! -z "$EXISTING_PID" ]; then
-    print_warning "Found existing process on port $API_PORT (PID: $EXISTING_PID). Killing it..."
-    kill -9 $EXISTING_PID 2>/dev/null || true
-    sleep 2
-fi
-
-# Set default environment variables if not set
-export API_HOST=${API_HOST:-"127.0.0.1"}
-export API_PORT=${API_PORT:-8000}
-# Convert LOG_LEVEL to lowercase for uvicorn compatibility
-LOG_LEVEL_LOWER=$(echo "${LOG_LEVEL:-warning}" | tr '[:upper:]' '[:lower:]')
-export GUNICORN_WORKERS=${GUNICORN_WORKERS:-1}
-export GUNICORN_TIMEOUT=${GUNICORN_TIMEOUT:-120}
-
-print_status "Starting server..."
-print_success "Server will be available at: http://$API_HOST:$API_PORT"
-
-# Start the server
-print_status "Loading models and starting server..."
-print_status "Using Uvicorn for optimal performance..."
-
-# Use Uvicorn for optimal performance
 exec uvicorn src.api.main:app \
-    --host $API_HOST \
-    --port $API_PORT \
-    --log-level $LOG_LEVEL_LOWER
+    --app-dir "$PROJECT_DIR/backend" \
+    --host "$API_HOST" \
+    --port "$API_PORT" \
+    --log-level "$LOG_LEVEL_LOWER"

@@ -310,6 +310,8 @@ class DocumentProcessor:
                 "page_end": page_num,  # Alias for compatibility
                 "chunk_index": chunk.metadata.get("chunk_index", i),
                 "ingest_version": chunk.metadata.get("ingest_version", INGEST_VERSION),
+                # doc_level is used by HybridRetriever to filter ug/pg chunks
+                "doc_level": chunk.metadata.get("doc_level", "general"),
                 # Preserve additional metadata that might be useful
                 "original_length": chunk.metadata.get("original_length", 0),
                 "cleaned_length": chunk.metadata.get("cleaned_length", 0),

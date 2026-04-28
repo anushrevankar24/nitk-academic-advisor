@@ -6,81 +6,48 @@
 :root {
     --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-    /* Light theme */
-    --bg-primary: #FBFBFB;
+    /* Light theme (Enforced) */
+    --bg-primary: #f0f2f5;
     --bg-secondary: #ffffff;
-    --bg-tertiary: #f3f4f6;
+    --bg-tertiary: #f9fafb;
     --bg-input: #ffffff;
     --bg-input-bar: #ffffff;
-    --bg-user-msg: linear-gradient(135deg, #6770D2 0%, #8b5cf6 100%);
+    --bg-user-msg: #6b46c1;
     --bg-bot-msg: #ffffff;
-    --bg-source-card: #f3f4f6;
-    --bg-hover: #eef0f3;
+    --bg-source-card: #f8fafc;
+    --bg-hover: #f1f5f9;
     --bg-code: #f1f3f5;
     --bg-kbd: #e9ecef;
     --bg-skeleton: #e9ecef;
     --bg-skeleton-shine: #f3f4f6;
 
-    --text-primary: #495057;
-    --text-secondary: #6c757d;
-    --text-tertiary: #adb5bd;
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --text-tertiary: #64748b;
     --text-on-accent: #ffffff;
-    --text-link: #6770D2;
+    --text-link: #6b46c1;
 
-    --border-color: #e2e5ea;
-    --border-input: #d1d5db;
-    --border-input-focus: #6770D2;
+    --border-color: #e2e8f0;
+    --border-input: #cbd5e1;
+    --border-input-focus: #6b46c1;
 
-    --accent: #6770D2;
-    --accent-hover: #5a63c0;
-    --accent-glow: rgba(103, 112, 210, 0.3);
+    --accent: #6b46c1;
+    --accent-hover: #553c9a;
+    --accent-glow: rgba(107, 70, 193, 0.3);
 
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-modal: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 16px;
     --radius-pill: 999px;
 
-    --confidence-high: #22c55e;
+    --confidence-high: #16a34a;
     --confidence-mid: #f59e0b;
-    --confidence-low: #ef4444;
-}
-
-[data-theme="dark"] {
-    --bg-primary: #1A1A1A;
-    --bg-secondary: #242424;
-    --bg-tertiary: #2E2E2E;
-    --bg-input: #2E2E2E;
-    --bg-input-bar: #242424;
-    --bg-user-msg: linear-gradient(135deg, #3B3E72 0%, #5a5dba 100%);
-    --bg-bot-msg: #242424;
-    --bg-source-card: #2E2E2E;
-    --bg-hover: #353535;
-    --bg-code: #2E2E2E;
-    --bg-kbd: #353535;
-    --bg-skeleton: #2E2E2E;
-    --bg-skeleton-shine: #353535;
-
-    --text-primary: #F8FFFF;
-    --text-secondary: #c8d0d0;
-    --text-tertiary: #8a9090;
-    --text-on-accent: #F8FFFF;
-    --text-link: #7b80c7;
-
-    --border-color: #3B3E72;
-    --border-input: #3B3E72;
-    --border-input-focus: #5a5dba;
-
-    --accent: #3B3E72;
-    --accent-hover: #4d50a0;
-    --accent-glow: rgba(59, 62, 114, 0.4);
-
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
+    --confidence-low: #dc2626;
 }
 
 
@@ -110,6 +77,18 @@ body {
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+#root {
+    display: contents; /* Alternatively: height: 100%; display: flex; flex-direction: column; flex: 1; min-height: 0; */
+}
+
+/* Fallback if display: contents isn't enough */
+.app-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
 
 /* --- Header --- */
 .app-header {
@@ -123,7 +102,7 @@ body {
 }
 
 .header-content {
-    max-width: 900px;
+    max-width: none;
     margin: 0 auto;
     padding: 14px 24px;
     display: flex;
@@ -227,16 +206,30 @@ body {
 }
 
 
+/* --- App Body (Chat + PDF Panel side-by-side) --- */
+.app-body {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    min-height: 0;
+    overflow: hidden;
+    position: relative;
+}
+
 /* --- Chat Container --- */
 .chat-container {
     flex: 1;
     display: flex;
     flex-direction: column;
-    max-width: 900px;
-    width: 100%;
-    margin: 0 auto;
+    min-width: 0;
     min-height: 0;
     overflow: hidden;
+    transition: max-width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* When PDF panel is open, constrain chat width */
+.app-body.pdf-open .chat-container {
+    max-width: calc(100% - 480px);
 }
 
 .chat-history {
@@ -316,6 +309,12 @@ body {
 
 
 /* --- Chat Messages --- */
+.chat-content-constraint {
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+}
+
 .chat-pair {
     display: flex;
     flex-direction: column;
@@ -326,14 +325,13 @@ body {
 /* User Message */
 .user-message {
     align-self: flex-end;
-    max-width: 75%;
+    max-width: 70%;
     background: var(--bg-user-msg);
     color: var(--text-on-accent);
     padding: 12px 18px;
-    border-radius: var(--radius-md) var(--radius-md) 4px var(--radius-md);
+    border-radius: 18px;
     font-size: 0.95rem;
     line-height: 1.5;
-    box-shadow: var(--shadow-sm);
     word-wrap: break-word;
 }
 
@@ -341,20 +339,20 @@ body {
 .bot-message {
     align-self: flex-start;
     width: 100%;
-    background: var(--bg-bot-msg);
-    border: 1px solid var(--border-color);
-    border-radius: 4px var(--radius-md) var(--radius-md) var(--radius-md);
-    box-shadow: var(--shadow-sm);
-    overflow: hidden;
-    transition: background-color 0.3s ease, border-color 0.3s ease;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
+    transition: background-color 0.3s ease;
 }
 
 .bot-message-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 18px;
-    border-bottom: 1px solid var(--border-color);
+    padding: 12px 18px 4px 18px;
+    border-bottom: none;
 }
 
 .bot-label {
@@ -771,7 +769,7 @@ body {
 }
 
 .input-bar-inner {
-    max-width: 900px;
+    max-width: 860px;
     margin: 0 auto;
 }
 
@@ -937,7 +935,252 @@ kbd {
 }
 
 
+/* ============================================================
+   PDF Side Panel
+   ============================================================ */
+
+.pdf-panel {
+    width: 0;
+    max-width: 0;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-secondary);
+    border-left: 1px solid var(--border-color);
+    overflow: hidden;
+    visibility: hidden;
+    transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                max-width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                visibility 0s linear 0.35s;
+    min-height: 0;
+}
+
+.pdf-panel.open {
+    width: 480px;
+    max-width: 480px;
+    visibility: visible;
+    transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                max-width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                visibility 0s linear 0s;
+}
+
+/* Panel header */
+.pdf-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+    gap: 10px;
+    background: var(--bg-tertiary);
+}
+
+.pdf-panel-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.pdf-panel-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.pdf-panel-title-group {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.pdf-panel-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 300px;
+}
+
+.pdf-panel-page {
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    margin-top: 1px;
+}
+
+.pdf-panel-close {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    font-family: var(--font-family);
+}
+
+.pdf-panel-close:hover {
+    background: var(--confidence-low);
+    color: white;
+    border-color: var(--confidence-low);
+}
+
+/* PDF canvas render area */
+.pdf-viewer-area {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+    background: #525659;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 8px;
+    gap: 12px;
+}
+
+/* The wrapper holding all rendered page canvases */
+.pdf-canvas-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+/* Individual page container (canvas + text layer overlay) */
+.pdf-page-container {
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    border-radius: 2px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.pdf-page-container canvas {
+    display: block;
+}
+
+/* Text layer — invisible text nodes overlaid on canvas for selection/search */
+.pdf-text-layer {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    line-height: 1;
+    user-select: text;
+}
+
+.pdf-text-layer span {
+    color: transparent;
+    position: absolute;
+    white-space: pre;
+    cursor: text;
+    transform-origin: 0% 0%;
+    pointer-events: all;
+}
+
+/* Highlight mark applied on matched spans */
+.pdf-highlight-mark {
+    background: rgba(255, 220, 0, 0.55) !important;
+    color: transparent !important;
+    border-radius: 2px;
+    box-shadow: 0 0 0 1px rgba(200, 160, 0, 0.5);
+}
+
+/* Loading state */
+.pdf-loading {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 0.85rem;
+    padding: 40px 20px;
+}
+
+.pdf-loading.visible {
+    display: flex;
+}
+
+.pdf-loading-spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid rgba(255,255,255,0.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spinPdf 0.8s linear infinite;
+}
+
+@keyframes spinPdf {
+    to { transform: rotate(360deg); }
+}
+
+/* Highlight status bar at panel bottom */
+.pdf-highlight-bar {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    background: var(--bg-tertiary);
+    border-top: 1px solid var(--border-color);
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+}
+
+/* Clickable source cards */
+.source-card.clickable {
+    cursor: pointer;
+}
+
+.source-card.clickable:hover {
+    border-color: var(--accent);
+    background: var(--bg-hover);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.source-card.clickable:active {
+    transform: translateY(0);
+}
+
+.source-open-hint {
+    font-size: 0.7rem;
+    color: var(--accent);
+    font-weight: 500;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
 /* --- Responsive --- */
+@media (max-width: 900px) {
+    .pdf-panel.open {
+        /* On narrow screens the panel covers the full width */
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 100vw !important;
+        z-index: 200;
+        border-left: none;
+    }
+
+    .app-body.pdf-open .chat-container {
+        max-width: 100%;
+    }
+}
+
 @media (max-width: 640px) {
     .header-content {
         padding: 12px 16px;
@@ -993,4 +1236,161 @@ kbd {
     .relevance-bar {
         flex: 1;
     }
+}
+
+/* --- Homepage Layout --- */
+.homepage-bg {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background-image: url('/background.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.homepage-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0,0,0,0.6) 0%, rgba(30,20,50,0.5) 100%);
+    z-index: 1;
+}
+
+.homepage-content {
+    position: relative;
+    z-index: 2;
+    padding: 3rem;
+    color: white;
+}
+
+.homepage-content h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.homepage-content p {
+    font-size: 1.25rem;
+    opacity: 0.9;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+.floating-chat-btn {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background-color: var(--accent);
+    color: var(--text-on-accent);
+    border: none;
+    box-shadow: var(--shadow-lg);
+    cursor: pointer;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+}
+
+.floating-chat-btn:hover {
+    transform: scale(1.1);
+    background-color: var(--accent-hover);
+}
+
+.floating-chat-btn.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.5);
+}
+
+.chat-icon {
+    font-size: 1.5rem;
+}
+
+/* --- Chat Modal Overlay --- */
+.chat-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.chat-modal-window {
+    width: 90vw;
+    height: 85vh;
+    background: var(--bg-primary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-modal);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.chat-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.chat-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.chat-close-btn:hover {
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(40px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* --- Scope Toggle --- */
+.scope-inline-selector {
+    display: flex;
+    align-items: center;
+    border-right: 1px solid var(--border-color);
+    padding-right: 12px;
+    margin-right: 2px;
+}
+
+.scope-dropdown {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-family: var(--font-family);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    outline: none;
+}
+
+.scope-dropdown:hover {
+    color: var(--text-primary);
 }
